@@ -279,7 +279,7 @@
 
       // setup view matrix
       const viewMatrix = glMatrix.mat4.create();
-      glMatrix.mat4.lookAt(viewMatrix, [0.14, 0.04, -0.5, 1], [0, 0, 0, 1], [0, 1, 0, 0]);
+      glMatrix.mat4.lookAt(viewMatrix, [0.0, -0.5, -0.5, 1], [0, 0, 0, 1], [0, 1, 0, 0]);
 
 
       // setup projection matrix
@@ -534,9 +534,6 @@
         }
         drawScene();
       }
-
-
-
 
       //Event listeners for user inputs for the transformations
       document.getElementById("translateX").addEventListener("click", redraw("tx"));
