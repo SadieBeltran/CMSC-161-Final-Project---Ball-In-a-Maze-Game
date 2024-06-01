@@ -48,11 +48,11 @@
       uniform sampler2D position; //0
       uniform sampler2D velocity; //1
       //uniform sampler2D obstacles; //2 no need yet
-      uniform int derivative; //0
-      uniform float random; //a random number
+      uniform int derivative; //0 used as if-condition
+      //uniform float random; //a random number no need yet
       uniform vec2 gravity; //[0, -0.05] <- just a fixed number where the ball goes down the y axis
-      uniform vec2 wind; //[0,0] affects direction where ball goes
-      uniform float restitution; //float unsure what's used for
+      //uniform vec2 wind; //[0,0] affects direction where ball goes ; no need yet
+      uniform float bounceCoeff; //float unsure what's used for
       uniform vec2 worldsize; //i assume this is used to check world bounds
       varying vec2 index; // doesn't look like it receives anything when called, maybe this is inherited from quad.vert?
             
@@ -187,6 +187,7 @@
         var canvas = document.getElementById("main_canvas");
       // declare constant section
         let W = canvas.width, H = canvas.height;
+        let worldsize = new Float32Array([W, H]);
         var scale = Math.floor(Math.pow(255, 2) / Math.max(w, h) / 3); //round down
         scale = [scale, scale*100];
         let gravity = [0. -0.05], bounceCoeff = 0.25; //gravity kc pababa po c anteh
@@ -229,6 +230,16 @@
         var uModelMatrixPointer = gl.getUniformLocation(program,"uModelMatrix");
         var uViewMatrixPointer = gl.getUniformLocation(program,"uViewMatrix");
         var uProjectionMatrixPointer = gl.getUniformLocation(program,"uProjectionMatrix");
+
+        // physics pointers
+        var gravityPointer = gl.getUniformLocation(program, "gravity");
+        var bouncePointer = gl.getUniformLocation(program, "bounceCoeff");
+        var worldSizePointer = gl.getUniformLocation(program, "worldsize");
+        var derivativePointer = gl.getUniformLocation(program, "derivative");
+        var posPointer = gl.getUniformLocation(program, 'position');
+        var velPointer = gl.getUniformLocation(program, 'velocity');
+        var scalePointer = gl.getUniformLocation(program, 'scale');
+
         /* END OF POINTER DEC */
 
         /* - TEXTURE CREATION - */
@@ -304,12 +315,16 @@
         gl.uniform4f(uLightDiffuseColorPtr,1.0,1.0,1.0,1.0);
         gl.uniform4f(uLightDirectionVectorPtr,-5.0,-3.0,-5.0,0.0);
 
-        //set up texture... what
-        gl.uniform1i(positionTexture, 0);
-        gl.uniform1i(velocityTexture, 1);
-        gl.uniform1i(obstacleTexture, 2);
-        //scale
-        gl.uniform2v(scale)
+        // CONSTANT DECLARATION
+        gl.uniform2fv(gravityPointer, gravity);
+        gl.uniform1f(bouncePointer, bounceCoeff);
+        gl.uniform2fv(worldSizePointer, worldsize);
+        gl.uniform1i(posPointer, 0),
+        gl.uniform1i(velPointer, 1),
+        gl.uniform1i(derivativePointer, 0);
+        gl.uniform2iv(scalePointer, scale);
+
+        //TOFIGURE OUT NEXT: MAKE IT REFLECT AT CANVAS EDGES
 
         /* - BUFFER CREATION SECTION - */
         // vertex buffer

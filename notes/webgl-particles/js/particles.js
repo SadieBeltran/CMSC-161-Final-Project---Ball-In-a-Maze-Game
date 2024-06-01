@@ -302,6 +302,7 @@ Particles.prototype.step = function() {
         .uniformi('obstacles', 2)
         .uniform('scale', this.scale)
         .uniform('random', Math.random() * 2.0 - 1.0)
+        //gl.uniform2fv
         .uniform('gravity', this.gravity)
         .uniform('wind', this.wind)
         .uniform('restitution', this.restitution)
@@ -342,7 +343,7 @@ Particles.prototype.draw = function() {
         .uniformi('velocities', 1)
         .uniform('statesize', this.statesize) //
         .uniform('worldsize', this.worldsize)
-        .uniform('size', this.size)
+        .uniform('size', this.size) //float, pointsize
         .uniform('scale', this.scale)
         .uniform('color', this.color)
         .draw(gl.POINTS, this.statesize[0] * this.statesize[1]);
