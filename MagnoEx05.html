@@ -26,7 +26,7 @@
   <canvas id="output" width="600" height="600"></canvas>
   <!-- USER INTERFACE -->
   <div>
-
+<div style="display: flex;"></div>
     <div style="width: 100%; text-align: center; font-weight: bold;">AFFINE TRANSFORMATIONS</div>
     <hr>
     <div style="width: 100vw; display: flex; justify-content: space-around;">
@@ -322,7 +322,7 @@
       // function to draw the scene from the user inputs
       function drawScene() {
         // clear the screen before drawing anything
-        gl.clearColor(0.0, 0.0, 0.0, 1.0); // black - RGBA
+        gl.clearColor(0.5, 0.5, 0.5, 1.0); // black - RGBA
         gl.clear(gl.COLOR_BUFFER_BIT); //execute
 
         // load uniforms (only done once; since values are same for all vertices)
