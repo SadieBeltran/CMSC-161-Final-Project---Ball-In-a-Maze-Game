@@ -2,24 +2,7 @@
 <html>
 
 <head>
-  <title>MagnoEx05</title>
-
-  <style>
-    .slider-container {
-      display: flex;
-      align-items: center;
-    }
-
-    .slider-container input[type="range"] {
-      margin-right: 10px;
-    }
-
-    .slider-container input[type="range"]:after {
-      content: attr(value);
-      margin-left: 5px;
-      color: #555;
-    }
-  </style>
+  <title>Ball in A Maze</title>
 </head>
 
 <body>
@@ -242,111 +225,6 @@
       }
       // initial render
       drawScene();
-
-
-
-      function redraw(code) {
-        return function () {
-
-          //Declaration and initialization of translation,scaling,rotation factors
-          let tr_x = 0, tr_y = 0, Sx = 1, Sy = 1;
-          let degrees = 0;
-          let tempTransformationMatrix = [1, 0, 0, 0,
-            0, 1, 0, 0,
-            0, 0, 1, 0,
-            0, 0, 0, 1]
-
-          if (code == "tx") tr_x = (document.getElementById("tx")).value;
-          if (code == "ty") tr_y = (document.getElementById("ty")).value;
-          if (code == "both" || code == "rotateat") {
-            tr_x = (document.getElementById("tx")).value;
-            tr_y = (document.getElementById("ty")).value;
-          }
-
-          if (code == "tx" || code == "ty" || code == "both") {
-            tempTransformationMatrix = [
-              1, 0, 0, 0,
-              0, 1, 0, 0,
-              0, 0, 1, 0,
-              tr_x, tr_y, 0, 1
-            ];
-            // glMatrix.mat4.translate(modelMatrix, modelMatrix, [tr_x, tr_y, -0.25, 0]);
-          }
-          if (code == "scaled") {
-            Sx = (document.getElementById("Sx")).value;
-            Sy = (document.getElementById("Sy")).value;
-
-            //Transformation matrix when scaling
-            tempTransformationMatrix = [
-              Sx, 0, 0, 0,
-              0, Sy, 0, 0,
-              0, 0, 1, 0,
-              0, 0, 0, 1
-            ];
-            // glMatrix.mat4.scale(modelMatrix, modelMatrix, [Sx, Sy, 1]);
-          }
-
-          //For ROTATION
-          if (code == "rotated") {
-            degrees = -(document.getElementById("R")).value; //made negative to rotate ccw at z-axis
-            let radians = Math.PI * degrees / 180;
-            let cosValue = Math.cos(radians);
-            let sinValue = Math.sin(radians);
-
-            //Transformation matrix when rotating
-            tempTransformationMatrix = [
-              cosValue, -sinValue, 0, 0,
-              sinValue, cosValue, 0, 0,
-              0, 0, 1, 0,
-              0, 0, 0, 1
-            ];
-
-            // glMatrix.mat4.rotateZ(modelMatrix, modelMatrix, glMatrix. glMatrix.toRadian(degrees));
-          }
-
-          //For ROTATION AT ARBITRARY POINT
-          // • Step 1: Compute T as (0, 0) – P
-          // • Step 2: Translate primitive by T.
-          // • Step 3: Rotate primitive by desired amount.
-          // • Step 4: Translate primitive by -T.
-          if (code == "rotateAt") {
-            degrees = -(document.getElementById("R")).value;
-            tr_x = -(document.getElementById("rotateAtX")).value;
-            tr_y = -(document.getElementById("rotateAtY")).value;
-            let radians = Math.PI * degrees / 180;
-            let cosValue = Math.cos(radians);
-            let sinValue = Math.sin(radians);
-
-            // translate primitive by T
-            let step2 = [
-              1, 0, 0, 0,
-              0, 1, 0, 0,
-              0, 0, 1, 0,
-              -tr_x, -tr_y, 0, 1
-            ];
-            // rotate primitive 
-            let step3 = [
-              cosValue, -sinValue, 0, 0,
-              sinValue, cosValue, 0, 0,
-              0, 0, 1, 0,
-              0, 0, 0, 1
-            ];
-            // translate primitive primitive by -T 
-            let step4 = [
-              1, 0, 0, 0,
-              0, 1, 0, 0,
-              0, 0, 1, 0,
-              tr_x, tr_y, 0, 1
-            ];
-
-            tempTransformationMatrix = multiplyMatrices(multiplyMatrices(step2, step3), step4);
-          }
-
-          transformationMatrix = multiplyMatrices(transformationMatrix, tempTransformationMatrix)
-          //rendering again after reflecting the transformations
-          drawScene();
-        }
-      }
 
       rotateListener(modelMatrix, drawScene, glMatrix.mat4.rotate);
     }

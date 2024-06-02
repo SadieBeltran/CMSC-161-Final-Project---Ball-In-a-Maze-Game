@@ -599,6 +599,19 @@ for i in range(len(parts)) :
     temp = parts[i][j][1]
     parts[i][j][1] = parts[i][j][2]
     parts[i][j][2] = temp
+    if j == 0:
+      parts[i][j].append(0)
+      parts[i][j].append(0)
+    elif j == 1:
+      parts[i][j].append(0)
+      parts[i][j].append(1)
+    elif j == 2:
+      parts[i][j].append(1)
+      parts[i][j].append(0)
+    elif j == 3:
+      parts[i][j].append(1)
+      parts[i][j].append(1)
+
     if j != len(parts[i])-1:
       print(parts[i][j], end=",")
     else:
