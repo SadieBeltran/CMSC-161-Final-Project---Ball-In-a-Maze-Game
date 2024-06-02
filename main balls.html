@@ -182,6 +182,8 @@
   <!-- // change here -->
   <script src="./vertices.js"></script>
   <script src="./lib/rotate.js"></script>
+  <script src="./lib/gl-matrix.js"></script>
+  <script src="./lib/gl-matrix-min.js"></script>
   <!-- <script src="./lib/gl-matrix-min.js"></script>
   <script src="./lib/gl-matrix.js"></script> -->
 
@@ -515,7 +517,7 @@
       // function to draw the scene from the user inputs
 
       function drawScene() {
-        console.log(ballModelMatrix);
+        console.log(ballmodelMatrix);
         // clear the screen before drawing anything
         gl.useProgram(program);
         gl.clearColor(0.0, 0.0, 0.0, 1.0); // black - RGBA
@@ -612,7 +614,7 @@
         gl.vertexAttribPointer(ballaPositionPointer, 4, gl.FLOAT, false, 0, 0);
         gl.enableVertexAttribArray(ballaPositionPointer);
         
-        gl.uniformMatrix4fv(balluModelMatrixPointer, false, new Float32Array(ballModelMatrix));
+        gl.uniformMatrix4fv(balluModelMatrixPointer, false, new Float32Array(ballmodelMatrix));
         gl.uniformMatrix4fv(balluViewMatrixPointer, false, new Float32Array(viewMatrix));
         gl.uniformMatrix4fv(balluProjectionMatrixPointer, false, new Float32Array(projectionMatrix));
 
@@ -648,7 +650,7 @@
       // initial render
       drawScene();
 
-      rotateListener(modelMatrix, ballModelMatrix, drawScene, glMatrix.mat4.rotate, glMatrix.mat4.translate);
+      rotateListener(modelMatrix, ballmodelMatrix, drawScene, glMatrix.mat4.rotate, glMatrix.mat4.translate);
     }
     main();
   </script>
