@@ -88,10 +88,10 @@
   <script>
     // BALL
     
-    var centerX = -0.05;
-    var centerY = 0;
+    var centerX = -0.5882553588856;
+    var centerY = -0.6117722514297;
     var centerZ = 0;
-    var radius = 0.0473428476264515;
+    var radius = 0.0573428476264515;
     var sphere_vertices = [];
     var indices = [];	
 
@@ -217,7 +217,7 @@
 
       // setup view matrix
       const viewMatrix = glMatrix.mat4.create();
-      const cameraPosition = [0, 0.6, -0.2]; // Adjust position for better viewing angle
+      const cameraPosition = [0, 0.5, -0.2]; // Adjust position for better viewing angle
       const lookAtPoint = [0, 0, 0];      // Center of the object
       const upVector = [0, 0.1, 0];  
 
@@ -248,9 +248,6 @@
       const balluModelMatrixPointer = gl.getUniformLocation(ballProgram, 'u_model_matrix');
       const balluViewMatrixPointer = gl.getUniformLocation(ballProgram, 'u_view_matrix');
       const balluProjectionMatrixPointer = gl.getUniformLocation(ballProgram, 'u_projection_matrix');
-
-      const ballModelMatrix = glMatrix.mat4.create();
-      glMatrix.mat4.rotateZ(ballModelMatrix, ballModelMatrix, glMatrix.glMatrix.toRadian(0));
 
       var ballVertexBuffer = gl.createBuffer();
       gl.bindBuffer(gl.ARRAY_BUFFER, ballVertexBuffer);
@@ -341,7 +338,7 @@
         gl.vertexAttribPointer(ballaPositionPointer,4,gl.FLOAT,false,0,0);
         gl.enableVertexAttribArray(ballaPositionPointer);
       
-        gl.uniformMatrix4fv(balluModelMatrixPointer, false, new Float32Array(ballModelMatrix));
+        gl.uniformMatrix4fv(balluModelMatrixPointer, false, new Float32Array(modelMatrix));
         gl.uniformMatrix4fv(balluViewMatrixPointer, false, new Float32Array(viewMatrix));
         gl.uniformMatrix4fv(balluProjectionMatrixPointer, false, new Float32Array(projectionMatrix));
         gl.uniform4fv(ballcolorLocation, [1.0, 0, 0, 1.0])
