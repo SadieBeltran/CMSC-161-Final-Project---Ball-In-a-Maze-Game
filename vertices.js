@@ -299,8 +299,7 @@ const side_outerRWall= [[0.6662, 0, -0.66694, 1], [0.6662, 0.2, -0.66694, 1], [0
 const top_outerRWall= [[0.6662, 0.2, -0.66694, 1], [0.6662, 0.2, 0.64325, 1], [0.6885, 0.2, -0.66694, 1], [0.6885, 0.2, 0.64325, 1]]
 
 const parts = [
-  inner,
-
+  inner, //bottom part
   wall1,
   wall2,
   wall3,
@@ -445,5 +444,4 @@ const parts = [
   top_outerRWall,
   top_outerTWall,
   top_outerLWall,
-
 ];
