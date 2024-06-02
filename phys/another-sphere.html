@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Sphere</title>
+</head>
+<body >
+	<canvas id="main_canvas" width ="800" height ="800" style="border: 1px black solid;"></canvas>
+
+  <script type="x-shader/x-vertex" id="updatevshader">
+    #ifdef GL_ES
+    precision highp float;
+    #endif
+
+    attribute vec2 quad; //aPosition equivalent
+    varying vec2 index; //looks like a local var
+
+    void main() {
+        index = (quad + 1.0) / 2.0; //index, we add position vec by 1 then divide by 2 and change to a vec4
+        //it's a vec2 because it only has x and y
+        gl_Position = vec4(quad, 0, 1);
+    }
+  </script>
+  
+  <script type="x-shader/x-fragment" id="updatefshader">
+    #ifdef GL_ES
+      precision highp float;
+      #endif
+      //called in line 280, concerned with animation
+      // sampler2d is a random access array in a shader
+      uniform sampler2D position; //0
+      uniform sampler2D velocity; //1
+      uniform sampler2D obstacles; //2
+      uniform int derivative; //0
+      uniform vec2 scale; //scale of world?
+      uniform float random; //a random number
+      uniform vec2 gravity; //[0, -0.05] <- just a fixed number where the ball goes down the y axis
+      uniform float restitution; //float unsure what's used for
+      uniform vec2 worldsize; //i assume this is used to check world bounds
+      varying vec2 index; // doesn't look like it receives anything when called, maybe this is inherited from quad.vert?
+
+      const float BASE = 255.0;
+      const float OFFSET = BASE * BASE / 2.0;
+
+      float decode(vec2 channels, float scale) {
+          return (dot(channels, vec2(BASE, BASE * BASE)) - OFFSET) / scale;
+      }
+
+      vec2 encode(float value, float scale) {
+          value = value * scale + OFFSET;
+          float x = mod(value, BASE);
+          float y = floor(value / BASE);
+          return vec2(x, y) / BASE;
+      }
+
+      void updatePosition(inout vec2 p, inout vec2 v, vec2 obstacle) {
+          //p += v + wind; //v + wind
+          if (p.y <= 0.0 || p.x < 0.0 || p.x > worldsize.x) {
+              /* Left the world, reset particle. */
+              p.y += worldsize.y + random + (index.y - 0.5) * sign(random);
+              p.x = mod(p.x + random * 10.0, worldsize.x);
+          }
+          if (length(obstacle) > 0.5) {
+              p -= v;        // back out velocity change
+              p += obstacle; // push out out obstacle
+          }
+      }
+
+      void updateVelocity(inout vec2 p, inout vec2 v, vec2 obstacle) {
+          v += gravity;
+          if (p.y + v.y < -1.0) {
+              /* Left the world, reset particle. */
+              v.x = v.x + random / 2.0 + (index.x - 0.5) * sign(random);
+              v.y = 0.0;
+          }
+          if (length(obstacle) > 0.5) {
+              if (length(v) < 0.5) {
+                  v = obstacle * 0.5; // velocity too low, jiggle outward
+              } else {
+                  v = reflect(v, obstacle) * restitution; // bounce
+              }
+          }
+      }
+
+      void main() {
+          vec4 psample = texture2D(position, index); //get texture at position
+          vec4 vsample = texture2D(velocity, index); //get texture at velocity
+          
+          vec2 p = vec2(decode(psample.rg, scale.x), decode(psample.ba, scale.x)); 
+          //a vec containing the dotproduct of the position vector and an OFFSET vector (OFFSET, OFFSET^2) subtracted by OFFSET then divided by scale.
+          //psample red-green channels of texture, according to the book of shaders, it's accessing vector.xy
+          //in this vector scale is scale of X
+          //and the dotproduct of psample.zw, with scale.x
+          //i think it gets the xposition and 
+          vec2 v = vec2(decode(vsample.rg, scale.y), decode(vsample.ba, scale.y));
+          //same thing here but with velocity and y because... *jazz hands* gravity    
+          
+          vec2 obstacle = (texture2D(obstacles, p / worldsize).xy - 0.5) * 2.0;
+          //sample obstacles. gonna need to store the maze verts in here
+          vec2 result; //var dec
+          float s; //var dec
+          if (derivative == 0) { //change == 0 (if-else statement to check if this is just declaration)
+              updatePosition(p, v, obstacle);
+              result = p;
+              s = scale.x;
+          } else {
+              updateVelocity(p, v, obstacle);
+              result = v;
+              s = scale.y;
+          }
+          //result contains the position and velocity i thnk
+          gl_FragColor = vec4(encode(result.x, s), encode(result.y, s));
+      }
+
+  </script>
+
+    <!--DRAW SHADERS  -->
+    <script type="x-shader/x-vertex" id="vshader">
+      attribute vec4 aPosition;
+      attribute vec4 aNormal;   //variable for normal vector at each vertex
+
+      uniform mat4 uModelMatrix;                //Model Matrix
+      uniform mat4 uViewMatrix;                 //View Matrix
+      uniform mat4 uProjectionMatrix;           //Projection Matrix
+      uniform mat4 uNormalMatrix;               //Normal Matrix
+      uniform vec4 uMaterialDiffuseColor;       //Kd
+      uniform vec4 uLightDiffuseColor;          //Ld
+      uniform vec4 uLightDirectionVector;       //l
+      varying vec4 vDiffuseColor;
+
+      void main() {
+        gl_Position = uProjectionMatrix * uViewMatrix * uModelMatrix * aPosition;
+
+        //get Corrected Normal vector from transformation
+        vec4 corrected_aNormal = uNormalMatrix * aNormal;
+
+        //get normalized normal and light vector
+            vec4 normalized_aNormalVector = normalize(corrected_aNormal);
+            vec4 normalized_uLightDirectionVector = normalize(uLightDirectionVector);
+
+        //get lambertCooeficient = (-l . n)
+            float lambertCoefficient = max(dot(-normalized_uLightDirectionVector,normalized_aNormalVector),0.0);
+
+        //Fd = Ld * Kd * (n dot -l)
+            vec4 diffuseColor =  uMaterialDiffuseColor * uLightDiffuseColor * lambertCoefficient;
+
+        vDiffuseColor = vec4(diffuseColor.r, diffuseColor.g, diffuseColor.b, 1.0);
+      }
+    </script>
+
+    <script type="x-shader/x-fragment" id="fshader">
+      precision mediump float;
+      uniform vec4 vDiffuseColor;
+
+      void main() {
+          
+        gl_FragColor = vDiffuseColor;
+      }
+    </script>
+
+    <!--Import external javascript file-->
+    <!--Helper javascript methods for initializing webgl-->
+    <script src="./lib/webgl-init.js"></script>
+    <script src="./lib/webgl-utils.js"></script>
+    <script src="./lib/webgl-debug.js"></script>
+    <script src="./lib/gl-matrix-min.js"></script>
+	  <script src="./lib/gl-matrix.js"></script>
+    <script src="./lib/igloo-0.1.2.js"></script>
+    <!-- igloo for convenient creation -->
+
+    <!-- VERTEX AND NORMAL CREATION -->
+    <script>
+      
+
+    </script>
+
+    <script>
+    	//Retrieve <canvas> element
+        var canvas = document.getElementById("main_canvas");
+        var igloo = new Igloo(canvas)
+      // declare constant section
+        let W = canvas.width, H = canvas.height;
+        let worldsize = new Float32Array([W, H]);
+        var scale = Math.floor(Math.pow(255, 2) / Math.max(W, H) / 3); //round down
+        scale = [scale, scale*100];
+        let gravity = [0. -0.05], bounceCoeff = 0.25; //gravity kc pababa po c anteh
+      //
+        if(!canvas) {
+          console.log("Failed to retrieve the <canvas> element");
+        }
+
+        //Get the rendering context (WebGL)
+        var gl = igloo.gl;
+        
+        // //initialize physics program (man...)
+        // var physvShader = initializeShader(gl, "updatevshader");
+        // var physfShader = initializeShader(gl, "updatefshader");
+        // var physicsProg = initializeProgram(gl, physvShader, physfShader);
+        
+        //initialize shaders program
+        var vertexShader = initializeShader(gl,"vshader");
+        var fragmentShader = initializeShader(gl, "fshader");
+        var program = initializeProgram(gl,vertexShader,fragmentShader);
+        gl.useProgram(program);
+
+
+      function main() {
+
+        /* POINTERS */ 
+        //position pointers
+        var aPositionPointer = gl.getAttribLocation(program,"aPosition");
+        var aNormalPointer = gl.getAttribLocation(program,"aNormal");
+        
+        /* ENABLE section */
+        gl.enableVertexAttribArray(aPositionPointer);
+        gl.enableVertexAttribArray(aNormalPointer);
+
+        
+        /*LIGHTING/COLOR POINTERS*/
+        var uNormalMatrixPtr = gl.getUniformLocation(program,"uNormalMatrix");
+        var uMaterialDiffuseColorPtr = gl.getUniformLocation(program,"uMaterialDiffuseColor");
+        var uLightDiffuseColorPtr = gl.getUniformLocation(program,"uLightDiffuseColor");
+        var uLightDirectionVectorPtr= gl.getUniformLocation(program,"uLightDirectionVector");
+        var uFragColorPointer = gl.getUniformLocation(program,"uColor");
+        
+        //TRANSFORMATION POINTERS
+        var uModelMatrixPointer = gl.getUniformLocation(program,"uModelMatrix");
+        var uViewMatrixPointer = gl.getUniformLocation(program,"uViewMatrix");
+        var uProjectionMatrixPointer = gl.getUniformLocation(program,"uProjectionMatrix");
+
+        // // physics pointers
+        // var physicsPointers = {
+        //   quadPointer: gl.getAttribLocation(physicsProg, "quad"),
+        //   positionPointer: gl.getUniformLocation(physicsProg, "position"),
+        //   obstaclePointer: gl.getUniformLocation(physicsProg, "obstacles"),
+        //   derivativePointer: gl.getUniformLocation(physicsProg, "derivative"),
+        //   scalePointer: gl.getUniformLocation(physicsProg, "scale"),
+        //   randomPointer: gl.getUniformLocation(physicsProg, "random"),
+        //   gravityPointer:gl.getUniformLocation(physicsProg, "gravity"),
+        //   bouncePointer: gl.getUniformLocation(physicsProg, "restitution"),
+        //   worldsizePointer: gl.getUniformLocation(worldsize, "worldsize"),
+        // }
+
+        /* END OF POINTER DEC */
+
+        var centerX = -0.5882553588856;
+      var centerY = -0.6117722514297;
+      var centerZ = 0;
+      var radius = 0.0873428476264515;
+      var sphere_vertices = [];
+      var indices = [];	
+
+      for (var i = 0; i <= 30; i++){
+        var temp = i * 2*Math.PI / 30;
+        var sin = Math.sin(temp);
+        var cos = Math.cos(temp);
+
+        for(var j = 0; j <= 30; j++){
+          var temp1 = j * 2 * Math.PI / 30;
+          var sin1 = Math.sin(temp1);
+          var cos1 = Math.cos(temp1);
+
+
+          var x = sin1 * sin * radius;
+          var y = cos * radius;
+          var z = sin * cos1 * radius;
+
+          sphere_vertices.push(centerX+x);
+          sphere_vertices.push(centerY+y);
+          sphere_vertices.push(z);
+          sphere_vertices.push(1.0);
+          // sphere_vertices.push(centerX + (radius * x), centerY + (radius *y), centerZ + (radius * z),1.0);
+        }
+      }
+
+         // Indices of the vertices
+         for (let k = 0; k< 30; k++){
+        for (let l = 0; l<30; l++){
+          const first = (k * (31))+l;
+          const second = first + 31;
+
+          indices.push(first);
+          indices.push(second);
+          indices.push(first+1);
+
+          indices.push(first+1);
+          indices.push(second);
+          indices.push(second+1);
+        }
+      }
+      console.log(indices);
+
+      
+      var normals = [   // Normal of each vertex
+        0.0, 0.0, 1.0, 0.0,   0.0, 0.0, 1.0, 0.0,   0.0, 0.0, 1.0, 0.0,   0.0, 0.0, 1.0, 0.0,  // front
+        0.0, 0.0, -1.0, 0.0,   0.0, 0.0, -1.0, 0.0,   0.0, 0.0, -1.0, 0.0,   0.0, 0.0, -1.0, 0.0,  // front
+        0.0, 1.0, 0.0, 0.0,   0.0, 1.0, 0.0, 0.0,   0.0, 1.0, 0.0, 0.0,   0.0, 1.0, 0.0, 0.0,  // front
+        0.0, -1.0, 0.0, 0.0,   0.0, -1.0, 0.0, 0.0,   0.0, -1.0, 0.0, 0.0,   0.0, -1.0, 0.0, 0.0,  // front
+        1.0, 0.0, 0.0, 0.0,   1.0, 0.0, 0.0, 0.0,   1.0, 0.0, 0.0, 0.0,   1.0, 0.0, 0.0, 0.0,  // right
+       -1.0, 0.0, 0.0, 0.0,  -1.0, 0.0, 0.0, 0.0,  -1.0, 0.0, 0.0, 0.0,  -1.0, 0.0, 0.0, 0.0   // left
+        ];
+
+        /* - TEXTURE CREATION - */
+        // https://webglfundamentals.org/webgl/lessons/webgl-skinning.html
+        // https://stackoverflow.com/questions/63322297/what-are-the-use-cases-of-sampler2d-uniforms-in-webgl-opengl
+        // var textures = {
+        //   p0: igloo.texture(null, gl.RGBA, gl.CLAMP_TO_EDGE, gl.NEAREST),
+        //   v0: igloo.texture(null, gl.RGBA, gl.CLAMP_TO_EDGE, gl.NEAREST),
+        //   p1: igloo.texture(null, gl.RGBA, gl.CLAMP_TO_EDGE, gl.NEAREST),
+        //   v1: igloo.texture(null, gl.RGBA, gl.CLAMP_TO_EDGE, gl.NEAREST),
+        //   obstacleTexture: igloo.texture().blank(W,H)
+        // };
+
+        //framebuffers
+        // var frame_buffers = {
+        //   step: igloo.framebuffer(),
+        //   // obstacles: igloo.framebuffer().attach(textures["obstacleTexture"])
+        // }
+
+        //BUFFER DECLARATIONS
+        var normalBuffer = gl.createBuffer(); //quad
+        var indexBuffer = gl.createBuffer(); //indexes
+        var verticesBuffer = gl.createBuffer(); //point
+
+        /*PROJECTION/MODEL/VIEW DECLARATIONS*/
+        var modelMatrix;
+        var viewMatrix;
+        var projectionMatrix;
+
+        /**START PROJECTION MATRIX SPECIFICATION**/
+        var fieldOfViewYAxis = glMatrix.toRadian(30);
+        var aspectRatio      = canvas.width/canvas.height;
+        var nearPlane        = 1;
+        var farPlane         = 100;
+
+        /**START VIEW MATRIX SPECIFICATION**/
+        var lookAtPoint = [0.0,0.0,0.0,1.0];              //where the camera is looking
+        var eyePoint    = [1.0,3.0,5.0,1.0];              //where the camera is placed
+        var upVector    = [0.0,1.0,0.0,0.0];              //orientation of the camera
+        var normalMatrix = mat4.create();
+
+        /*END OF PROJECTION/MODEL/VIEW DECLARATIONS*/
+
+        gl.clearColor(0.0,0.0,0.0,1.0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+
+        //ENABLE DEPTH TESTING
+        gl.enable(gl.DEPTH_TEST);
+        gl.clear(gl.DEPTH_BUFFER_BIT);
+
+        projectionMatrix = mat4.create();
+        mat4.perspective(projectionMatrix,fieldOfViewYAxis,aspectRatio,nearPlane,farPlane);
+        gl.uniformMatrix4fv(uProjectionMatrixPointer,false,new Float32Array(projectionMatrix));
+        /**END PROJECTION MATRIX SPECIFICATION**/
+
+        viewMatrix = mat4.create();
+        mat4.lookAt(viewMatrix,eyePoint,lookAtPoint,upVector);
+        gl.uniformMatrix4fv(uViewMatrixPointer,false,new Float32Array(viewMatrix));
+        /**END VIEW MATRIX SPECIFICATION**/
+
+        //MODEL MATRIX
+        modelMatrix = mat4.create();
+        modelMatrix = mat4.identity(modelMatrix);
+        gl.uniformMatrix4fv(uModelMatrixPointer,false,new Float32Array(modelMatrix));
+
+        //add normal matrix
+        mat4.invert(normalMatrix,modelMatrix);
+        mat4.transpose(normalMatrix,normalMatrix);
+        gl.uniformMatrix4fv(uNormalMatrixPtr,false,new Float32Array(normalMatrix));
+        
+        //set-up light and material parameters
+        gl.uniform4f(uMaterialDiffuseColorPtr,0.6,0.4,0.6,1.0);
+        gl.uniform4f(uLightDiffuseColorPtr,1.0,1.0,1.0,1.0);
+        gl.uniform4f(uLightDirectionVectorPtr,-5.0,-3.0,-5.0,0.0);
+        
+
+        /* - BUFFER CREATION SECTION - */
+        // vertex buffer
+        gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(sphere_vertices), gl.STATIC_DRAW);
+        gl.vertexAttribPointer(aPositionPointer,4,gl.FLOAT,false,0,0);
+        gl.enableVertexAttribArray(aPositionPointer);
+
+        // index buffer
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
+        // normal buffer
+        gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normals), gl.STATIC_DRAW);
+        gl.vertexAttribPointer(aNormalPointer,4,gl.FLOAT,false,0,0);
+        gl.enableVertexAttribArray(aNormalPointer);
+
+        
+        /* - BUFFER CREATION SECTION - */
+        
+        /* DRAW SECTION */
+        gl.useProgram(program);
+
+        gl.clearColor(1.0,1.0,1.0,1.0);
+          gl.clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT);
+
+        // CONSTANT DECLARATION
+        
+        //TOFIGURE OUT NEXT: MAKE IT REFLECT AT CANVAS EDGES
+
+        //draw part
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+        ;
+        gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0);
+      };
+         
+
+      main();
+    </script>
+</body>
+</html>

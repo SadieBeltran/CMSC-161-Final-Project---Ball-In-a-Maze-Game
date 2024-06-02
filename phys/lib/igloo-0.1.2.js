@@ -113,9 +113,7 @@ Igloo.prototype.program = function(vertex, fragment, transform) {
 Igloo.prototype.array = function(data, usage) {
     var gl = this.gl,
         buffer = new Igloo.Buffer(gl, gl.ARRAY_BUFFER);
-        //buffer = gl.createBuffer()
     if (data != null) {
-        //gl.bufferData(buffer, data, usage)
         buffer.update(data, usage == null ? gl.STATIC_DRAW : usage);
     }
     return buffer;
@@ -337,7 +335,6 @@ Igloo.Buffer = function(gl, target) {
  * @returns {Igloo.Buffer} this
  */
 Igloo.Buffer.prototype.bind = function() {
-    //gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer())
     this.gl.bindBuffer(this.target, this.buffer);
     return this;
 };
@@ -391,7 +388,6 @@ Igloo.Texture = function(gl, format, wrap, filter) {
  */
 Igloo.Texture.prototype.bind = function(unit) {
     var gl = this.gl;
-    console.log("bounded", unit);
     if (unit != null) {
         gl.activeTexture(gl.TEXTURE0 + unit);
     }
@@ -408,7 +404,6 @@ Igloo.Texture.prototype.bind = function(unit) {
 Igloo.Texture.prototype.blank = function(width, height) {
     var gl = this.gl;
     this.bind();
-    // https://registry.khronos.org/OpenGL-Refpages/gl4/html/glTexImage2D.xhtml
     gl.texImage2D(gl.TEXTURE_2D, 0, this.format, width, height,
                   0, this.format, gl.UNSIGNED_BYTE, null);
     return this;
@@ -510,8 +505,7 @@ Igloo.Framebuffer.prototype.unbind = function() {
  */
 Igloo.Framebuffer.prototype.attach = function(texture) {
     var gl = this.gl;
-    this.bind(); //gl.bindbuffer(target, buffer);
-    //gl.bindbuffer(gl.ARRAYBUFFER, )
+    this.bind();
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0,
                             gl.TEXTURE_2D, texture.texture, 0);
     return this;

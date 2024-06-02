@@ -2,24 +2,7 @@
 <html>
 
 <head>
-  <title>MagnoEx05</title>
-
-  <style>
-    .slider-container {
-      display: flex;
-      align-items: center;
-    }
-
-    .slider-container input[type="range"] {
-      margin-right: 10px;
-    }
-
-    .slider-container input[type="range"]:after {
-      content: attr(value);
-      margin-left: 5px;
-      color: #555;
-    }
-  </style>
+  <title>Ball in A Maze</title>
 </head>
 
 <body>
@@ -163,6 +146,65 @@
         0, 0, 0, 1
       ];
 
+      var centerX = -0.5882553588856;
+      var centerY = -0.6117722514297;
+      var centerZ = 0.1;
+      var radius = 0.0873428476264515/2;
+      var sphere_vertices = [];
+      var indices = []; 
+      var slices = 30;
+
+       for (var i = 0; i <= slices; i++){
+        var temp = i * 2*Math.PI / slices;
+        var sin = Math.sin(temp);
+        var cos = Math.cos(temp);
+
+        for(var j = 0; j <= slices; j++){
+          var temp1 = j * 2 * Math.PI / slices;
+          var sin1 = Math.sin(temp1);
+          var cos1 = Math.cos(temp1);
+
+
+          var x = sin1 * sin * radius;
+          var y = cos * radius;
+          var z = sin * cos1 * radius;
+
+          sphere_vertices.push(centerX+x);
+          sphere_vertices.push(centerY+y);
+          sphere_vertices.push(centerZ+z);
+          sphere_vertices.push(1.0);
+          // sphere_vertices.push(centerX + (radius * x), centerY + (radius *y), centerZ + (radius * z),1.0);
+        }
+      }
+       // Indices of the vertices
+       for (let k = 0; k< slices; k++){
+        for (let l = 0; l<slices; l++){
+          const first = (k * (slices+1))+l;
+          const second = first + slices+1;
+
+          indices.push(first);
+          indices.push(second);
+          indices.push(first+1);
+
+          indices.push(first+1);
+          indices.push(second);
+          indices.push(second+1);
+        }
+      }
+
+      var verticesBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(sphere_vertices), gl.STATIC_DRAW);
+        gl.vertexAttribPointer(aPositionPointer,4,gl.FLOAT,false,0,0);
+        gl.enableVertexAttribArray(aPositionPointer);
+        
+        // Indices of the vertices
+        
+        //buffer creation
+        var indexBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
       // setup model matrix;
       const modelMatrix = glMatrix.mat4.create();
       glMatrix.mat4.rotateZ(modelMatrix, modelMatrix, glMatrix.glMatrix.toRadian(0));
@@ -174,7 +216,7 @@
       const upVector = [0, 0.1, 0];
 
       // Create the view matrix
-      glMatrix.mat4.lookAt(viewMatrix, cameraPosition, lookAtPoint, upVector);
+     glMatrix.mat4.lookAt(viewMatrix, cameraPosition, lookAtPoint, upVector);
 
 
       // setup projection matrix
@@ -223,7 +265,7 @@
       function drawScene() {
         // clear the screen before drawing anything
         gl.clearColor(0.0, 0.0, 0.0, 1.0); // black - RGBA
-        gl.clear(gl.COLOR_BUFFER_BIT); //execute
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT); //execute
 
         // load uniforms (only done once; since values are same for all vertices)
         gl.uniformMatrix4fv(uModelMatrixPointer, false, new Float32Array(modelMatrix));
@@ -329,114 +371,13 @@
           //unbind the buffer
           gl.bindBuffer(gl.ARRAY_BUFFER, null);
         }
+          gl.uniform4f(colorLocation, 1,1,1,1);
+          gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+          gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0); 
       }
       // initial render
       drawScene();
-
-
-      function redraw(code) {
-        return function () {
-
-          //Declaration and initialization of translation,scaling,rotation factors
-          let tr_x = 0, tr_y = 0, Sx = 1, Sy = 1;
-          let degrees = 0;
-          let tempTransformationMatrix = [1, 0, 0, 0,
-            0, 1, 0, 0,
-            0, 0, 1, 0,
-            0, 0, 0, 1]
-
-          if (code == "tx") tr_x = (document.getElementById("tx")).value;
-          if (code == "ty") tr_y = (document.getElementById("ty")).value;
-          if (code == "both" || code == "rotateat") {
-            tr_x = (document.getElementById("tx")).value;
-            tr_y = (document.getElementById("ty")).value;
-          }
-
-          if (code == "tx" || code == "ty" || code == "both") {
-            tempTransformationMatrix = [
-              1, 0, 0, 0,
-              0, 1, 0, 0,
-              0, 0, 1, 0,
-              tr_x, tr_y, 0, 1
-            ];
-            // glMatrix.mat4.translate(modelMatrix, modelMatrix, [tr_x, tr_y, -0.25, 0]);
-          }
-          if (code == "scaled") {
-            Sx = (document.getElementById("Sx")).value;
-            Sy = (document.getElementById("Sy")).value;
-
-            //Transformation matrix when scaling
-            tempTransformationMatrix = [
-              Sx, 0, 0, 0,
-              0, Sy, 0, 0,
-              0, 0, 1, 0,
-              0, 0, 0, 1
-            ];
-            // glMatrix.mat4.scale(modelMatrix, modelMatrix, [Sx, Sy, 1]);
-          }
-
-          //For ROTATION
-          if (code == "rotated") {
-            degrees = -(document.getElementById("R")).value; //made negative to rotate ccw at z-axis
-            let radians = Math.PI * degrees / 180;
-            let cosValue = Math.cos(radians);
-            let sinValue = Math.sin(radians);
-
-            //Transformation matrix when rotating
-            tempTransformationMatrix = [
-              cosValue, -sinValue, 0, 0,
-              sinValue, cosValue, 0, 0,
-              0, 0, 1, 0,
-              0, 0, 0, 1
-            ];
-
-            // glMatrix.mat4.rotateZ(modelMatrix, modelMatrix, glMatrix. glMatrix.toRadian(degrees));
-          }
-
-          //For ROTATION AT ARBITRARY POINT
-          // • Step 1: Compute T as (0, 0) – P
-          // • Step 2: Translate primitive by T.
-          // • Step 3: Rotate primitive by desired amount.
-          // • Step 4: Translate primitive by -T.
-          if (code == "rotateAt") {
-            degrees = -(document.getElementById("R")).value;
-            tr_x = -(document.getElementById("rotateAtX")).value;
-            tr_y = -(document.getElementById("rotateAtY")).value;
-            let radians = Math.PI * degrees / 180;
-            let cosValue = Math.cos(radians);
-            let sinValue = Math.sin(radians);
-
-            // translate primitive by T
-            let step2 = [
-              1, 0, 0, 0,
-              0, 1, 0, 0,
-              0, 0, 1, 0,
-              -tr_x, -tr_y, 0, 1
-            ];
-            // rotate primitive 
-            let step3 = [
-              cosValue, -sinValue, 0, 0,
-              sinValue, cosValue, 0, 0,
-              0, 0, 1, 0,
-              0, 0, 0, 1
-            ];
-            // translate primitive primitive by -T 
-            let step4 = [
-              1, 0, 0, 0,
-              0, 1, 0, 0,
-              0, 0, 1, 0,
-              tr_x, tr_y, 0, 1
-            ];
-
-            tempTransformationMatrix = multiplyMatrices(multiplyMatrices(step2, step3), step4);
-          }
-
-          transformationMatrix = multiplyMatrices(transformationMatrix, tempTransformationMatrix)
-          //rendering again after reflecting the transformations
-          drawScene();
-        }
-      }
-
+      
       rotateListener(modelMatrix, drawScene, glMatrix.mat4.rotate);
     }
     main();
