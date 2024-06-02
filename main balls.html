@@ -250,23 +250,23 @@
 
       // setup view matrix
       const viewMatrix = glMatrix.mat4.create();
-      const cameraPosition = [0, 0.5, -0.2]; // Adjust position for better viewing angle
-      const lookAtPoint = [0, 0, 0];      // Center of the object
-      const upVector = [0, 0.1, 0];
+      const eyePosition = [0, 0.2, -0.2];
+      const lookAtPoint = [0, 0, 0.2];    
+      const upVector = [0, 0.5, 0];  
 
       // Create the view matrix
-      glMatrix.mat4.lookAt(viewMatrix, cameraPosition, lookAtPoint, upVector);
+      glMatrix.mat4.lookAt(viewMatrix, eyePosition, lookAtPoint, upVector);
 
 
       // setup projection matrix
       const projectionMatrix = glMatrix.mat4.create();
 
       // Update the orthographic projection
-      const left = -1;
-      const right = 1;
+      const left = -0.8;
+      const right = 0.8;
       const bottom = -1;
-      const top = 1;
-      const near = -1;   // Should encompass the object's minimum depth
+      const top = 0.8;
+      const near = -1.9;   // Should encompass the object's minimum depth
       const far = 1.5;     // Should be greater than the camera's maximum depth
 
       glMatrix.mat4.ortho(projectionMatrix, left, right, bottom, top, near, far);
