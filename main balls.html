@@ -330,7 +330,7 @@
 
       // setup model matrix;
       const modelMatrix = mat4.create();
-      mat4.rotateZ(modelMatrix, modelMatrix, glMatrix.toRadian(0));
+      mat4.rotateZ(modelMatrix, modelMatrix, toRadian(0));
 
       // setup view matrix
       const viewMatrix = mat4.create();
@@ -405,7 +405,7 @@
         var ballprojectionMatrix;
 
         /**START PROJECTION MATRIX SPECIFICATION**/
-        var ballfieldOfViewYAxis = glMatrix.toRadian(30);
+        var ballfieldOfViewYAxis = toRadian(30);
         var ballaspectRatio      = canvas.width/canvas.height;
         var ballnearPlane        = 1;
         var ballfarPlane         = 100;
@@ -646,7 +646,7 @@
       // initial render
       drawScene();
 
-      rotateListener(modelMatrix, ballmodelMatrix, drawScene, glMatrix.mat4.rotate, glMatrix.mat4.translate);
+      rotateListener(modelMatrix, ballmodelMatrix, drawScene, mat4.rotate, mat4.translate);
     }
     main();
   </script>
