@@ -140,13 +140,13 @@
       var vertices = [   // Coordinates
 
         // Front face           U, V
-        -1.0, -1.0, 1.0, 1.0,   0, 0,
-        1.0, -1.0, 1.0, 1.0,    1, 0,
-        1.0, 1.0, 1.0, 1.0,     1, 1,
-        -1.0, 1.0, 1.0, 1.0,    0, 1,
+        -1.0, -1.0, 1.0, 1.0, 0, 0,
+        1.0, -1.0, 1.0, 1.0, 1, 0,
+        1.0, 1.0, 1.0, 1.0, 1, 1,
+        -1.0, 1.0, 1.0, 1.0, 0, 1,
 
         // Back face
-        -1.0, -1.0, -1.0, 1.0,  1, 1,
+        -1.0, -1.0, -1.0, 1.0, 1, 1,
         -1.0, 1.0, -1.0, 1.0, 1, 0,
         1.0, 1.0, -1.0, 1.0, 0, 0,
         1.0, -1.0, -1.0, 1.0, 0, 1,
@@ -181,14 +181,23 @@
       var verticesBuffer = gl.createBuffer();
 
       // Indices of the vertices
+      // var indices = [
+      //   0, 1, 2, 0, 2, 3,    // Front face
+      //   4, 5, 6, 4, 6, 7,    // Back face
+      //   8, 9, 10, 8, 10, 11,  // Top face
+      //   12, 13, 14, 12, 14, 15, // Bottom face
+      //   16, 17, 18, 16, 18, 19, // Right face
+      //   20, 21, 22, 20, 22, 23  // Left face
+      // ];
       var indices = [
-        0, 1, 2, 0, 2, 3,    // Front face
-        4, 5, 6, 4, 6, 7,    // Back face
-        8, 9, 10, 8, 10, 11,  // Top face
-        12, 13, 14, 12, 14, 15, // Bottom face
-        16, 17, 18, 16, 18, 19, // Right face
-        20, 21, 22, 20, 22, 23  // Left face
+        0, 1, 2, 3, 0,    // Front face
+        4, 5, 6, 7, 4,    // Back face
+        8, 9, 10, 11, 8,  // Top face
+        12, 13, 14, 15, 12,  // Bottom face
+        16, 17, 18, 19, 16,  // Right face
+        20, 21, 22, 23, 20  // Left face
       ];
+
       //buffer creation
       var indexBuffer = gl.createBuffer();
 
@@ -237,7 +246,7 @@
 
         gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
-        gl.vertexAttribPointer(aPositionPointer, 4, gl.FLOAT, false, 0, 0);
+        // gl.vertexAttribPointer(aPositionPointer, 4, gl.FLOAT, false, 0, 0);
 
         // trying texture
         gl.vertexAttribPointer(
@@ -296,7 +305,7 @@
         gl.bindTexture(gl.TEXTURE_2D, boxTexture);
         gl.activeTexture(gl.TEXTURE0);
 
-        gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_BYTE, 0);
+        gl.drawElements(gl.TRIANGLE_STRIP, indices.length, gl.UNSIGNED_BYTE, 0);
 
       }
 
