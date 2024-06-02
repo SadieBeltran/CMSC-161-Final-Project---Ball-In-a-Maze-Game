@@ -19,11 +19,24 @@
       margin-left: 5px;
       color: #555;
     }
+
+    html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden;
+    width:100%; height:100%;
+}
   </style>
 </head>
 
 <body>
-  <canvas id="output" width="600" height="600"></canvas>
+  <!-- input/stats -->
+  <div> 
+    <canvas id="output" style="z-index: 1;"></canvas>
+    <div style="z-index: 2; position: absolute; " class="column">
+      
+    </div>
+  </div>
 
   <script src="./utils/gl-matrix.js"></script>
   <!-- VERTEX SHADER -->
@@ -155,6 +168,8 @@
     function main() {
 
       const canvas = document.querySelector('#output');
+      canvas.width = document.body.clientWidth;
+      canvas.height = document.body.clientHeight;      
       if (!canvas) {
         console.log("Canvas element with specified ID ('output') cannot be found.");
       }
