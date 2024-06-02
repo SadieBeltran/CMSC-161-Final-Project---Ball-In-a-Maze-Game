@@ -31,10 +31,15 @@
 
 <body>
   <!-- input/stats -->
-  <div> 
-    <canvas id="output" style="z-index: 1;"></canvas>
-    <div style="z-index: 2; position: absolute; " class="column">
-      
+  <div style="width: 100%; background-color: black; text-align: center;"> 
+    <canvas id="output" style="z-index: 1; top: 0px; left: 0px; display: inline-block;"></canvas>
+    <div style="z-index: 2; position: absolute; color: white; top: 0px; left: 0px; text-align: left;" class="column">
+      <h2>CMSC 161 Final Project: Ball in a Maze</h2>
+      <h3>Submitted by:</h3>
+      <p>Ariel Raphael Magno</p>
+      <p>John Kenneth Manalang</p>
+      <p>Luke Adrian Pineda</p>      
+      <p>Elysse Samantha Beltran</p>
     </div>
   </div>
 
@@ -168,7 +173,7 @@
     function main() {
 
       const canvas = document.querySelector('#output');
-      canvas.width = document.body.clientWidth;
+      canvas.width = document.body.clientWidth*0.70;
       canvas.height = document.body.clientHeight;      
       if (!canvas) {
         console.log("Canvas element with specified ID ('output') cannot be found.");
