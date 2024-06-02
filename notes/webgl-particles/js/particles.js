@@ -14,7 +14,7 @@ function Particles(canvas, nparticles, size) {
     this.worldsize = new Float32Array([w, h]);
     var scale = Math.floor(Math.pow(Particles.BASE, 2) / Math.max(w, h) / 3);
     this.scale = [scale, scale * 100];
-    this.listeners = [];
+    this.listeners = []; //for FPS counter
 
     /* Vertex shader texture access not guaranteed on OpenGL ES 2.0. */
     if (gl.getParameter(gl.MAX_VERTEX_TEXTURE_IMAGE_UNITS) === 0) {
@@ -64,6 +64,15 @@ function Particles(canvas, nparticles, size) {
         //blank(w,h)
         //gl.bindBuffer(gl.ARRAY_ELEM, gl.createBuffer())
         //gl.texImage2D(gl.TEXTURE_2D, 0, w, h, 0, gl.UNSIGNED_BYTE, null)
+
+        //gl.createTexture
+        //gl.bindTexture(gl.TEXTURE_2D, obstacles)
+        //l.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_TEDGE);
+        // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_TEDGE);
+        // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.lINEAR);
+        // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.lINEAR);
+        // gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height,         0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+
     };
     this.framebuffers = {
         step: igloo.framebuffer(), //gl.createFramebuffer()
