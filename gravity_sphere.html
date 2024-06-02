@@ -81,6 +81,7 @@
         var fragmentShader = initializeShader(gl, "fshader");
         var program = initializeProgram(gl,vertexShader,fragmentShader);
         gl.useProgram(program);
+        var velocity = [0, 0.01, 0];
 
       function main() {
         
@@ -127,6 +128,7 @@
 
         viewMatrix = mat4.create();
         mat4.lookAt(viewMatrix,eyePoint,lookAtPoint,upVector);
+        // mat4.lookAt(identity);
         gl.uniformMatrix4fv(uViewMatrixPointer,false,new Float32Array(viewMatrix));
         /**END VIEW MATRIX SPECIFICATION**/
 
@@ -150,8 +152,8 @@
         var uLightDirectionVectorPtr= gl.getUniformLocation(program,"uLightDirectionVector");
         gl.uniform4f(uLightDirectionVectorPtr,-5.0,-3.0,-5.0,0.0);
 
-      var centerX = -0.5882553588856;
-      var centerY = -0.6117722514297;
+      var centerX = 0;
+      var centerY = 0;
       var centerZ = 0;
       var radius = 0.0873428476264515;
       var sphere_vertices = [];
@@ -203,7 +205,7 @@
           indices.push(second+1);
         }
       }
-      console.log(indices);
+     // console.log(indices);
 
                //buffer creation
         var indexBuffer = gl.createBuffer();
@@ -223,85 +225,38 @@
         var normalBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normals), gl.STATIC_DRAW);
-        let gravity = [0, 0, 0], then = 0, v, difference, mult = 0, cross;
+        let ballDirection = [0, 0, 0], then = 0, v, difference;
         let animationTo = true;
         requestAnimationFrame(render);
-        drawElems(gravity);
+        drawElems(ballDirection);
+      
+
 
         function render(now){
           now *= 0.001;
           deltaTime = now - then;
           then = now;
-          v = determinePhysics(deltaTime, gravity);
-          drawElems(gravity);
-          vec3.add(
-            gravity,
-            gravity,
-            v
-          )
-          console.log(gravity);
+          drawElems(ballDirection);
+          temp = ballDirection.map((e,i) => e + velocity[i]);
+
+          if(temp[0] > -1 && temp[0] < 1) ballDirection[0] += velocity[0];
+          if(temp[1] > -1 && temp[1] < 1) ballDirection[1] += velocity[1];          
+
+          // console.log(ballDirection);
+
           requestAnimationFrame(render);
         }
 
-        const isbelowBounds = (val) => (val < 1);
+        const isbelowUBounds = (val) => (val < 1);
+        const isbelowLBounds = (val) => (val > -1);
         const isbeyondBounds = (val) => (val > 1);
-
-        function determinePhysics(deltaTime, gravity){
-          console.log("in func");
-          let v = vec3.fromValues(0,deltaTime,0); //changing the values of this vec3 changes the direction the ball
-          let future_v = vec3.add(
-            gravity,
-            gravity,
-            v
-          )
-          console.log("futur_v"+ future_v);
-          // if one point future_v > 1.0 (out bounds), bounce back
-          if(!future_v.every(isbelowBounds)){
-            //if encountered bounds, find which axis it encountered
-            let axis = [0,0,0];
-            index = future_v.findIndex(isbeyondBounds);
-            vec3.getAxis(axis, index);
-            // console.log("index: ", index);
-            vec3.cross(
-              cross,
-              future_v,
-              axis
-            );
-            vec3.difference(
-              difference,
-              future_v,
-              cross
-            );
-            
-            console.log("true");
-            gravity = vec3.scale(gravity, gravity, -1);
-          }
-
-          
-          // calculate crossproduct of gravity and the axis to find next direction
-          let temp = [0,0,0];
-          if(v != cross){
-            mult += 0.1;
-            vec3.scale(
-              temp,
-             difference,
-             mult
-            )
-          }
-          if(mult == 1){
-            mult = 0;
-          }
-          vec3.add(
-            v,
-            v,
-            temp
-          );
-
-
-          return v;
+        function addvector(a,b){
+            return a.map((e,i) => e + b[i]);
         }
-
-        function drawElems(gravity){  
+          var lastPosition = mat4.create();
+          var currentX = lastPosition[12];
+          var currentY = lastPosition[13];
+        function drawElems(ballDirection){  
           gl.vertexAttribPointer(aNormalPointer,4,gl.FLOAT,false,0,0);
           gl.enableVertexAttribArray(aNormalPointer);
           
@@ -312,11 +267,21 @@
           mat4.translate(
             modelMatrix, // destination matrix
             modelMatrix, // matrix to translate
-            gravity
+            ballDirection
           ); // amount to translate
-
+          var newX = currentCenter(modelMatrix[1]);
+          
+          if (currentX != currentCenter(modelMatrix)[0] || currentY != currentCenter(modelMatrix)[1]){
+            console.log(currentCenter(modelMatrix));
+            currentX = currentCenter(modelMatrix)[0];
+            currentY = currentCenter(modelMatrix)[1];
+          };
+    //     if (!matricesEqual(lastPosition, modelMatrix)) {
+    //       console.log("Model Matrix:", modelMatrix);
+    //       mat4.copy(lastPosition, modelMatrix);
+    // }
           gl.uniformMatrix4fv(uModelMatrixPointer,false,new Float32Array(modelMatrix));
-
+           
           //add normal matrix
           mat4.invert(normalMatrix,modelMatrix);
           mat4.transpose(normalMatrix,normalMatrix);
@@ -325,9 +290,39 @@
           //draw part
           gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
           gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0);
+          
         }
       };
+      var lastDownTarget, canvas;
+        window.onload = function() {
+            canvas = document.getElementById('canvas');
 
+            document.addEventListener('keydown', function(event) {
+              // alert(event);
+                if(event.keyCode == 37) {
+                  velocity[0] += -0.01;
+                  if(velocity[0] == 0) velocity[0] += -0.01;
+                }else if(event.keyCode == 38){
+                  velocity[1] += 0.01;
+                  if(velocity[1] == 0) velocity[1] += 0.01;
+                }else if(event.keyCode == 39){
+                  velocity[0] += 0.01;
+                  if(velocity[0] == 0) velocity[0] += 0.01;
+                }else if(event.keyCode == 40){ //down
+                  velocity[1] += -0.01;
+                  if(velocity[1] == 0) velocity[1] += -0.01;
+                }
+                // alert(velocity);
+            }, false);
+      }
+      function currentCenter(modelMatrix){
+        var centerX = modelMatrix[12];
+        var centerY = modelMatrix[13];
+        var center = [centerX,centerY]
+        return center;
+
+      }
+    
       main();
     </script>
 </body>
