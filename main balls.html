@@ -31,7 +31,7 @@
   </div>
 
   <script src="./utils/gl-matrix.js"></script>
-  <script src="./lib/gl-matrix.js"></script>
+  <!-- <script src="./lib/gl-matrix.js"></script> -->
    <script type="x-shader/x-vertex" id="vshader">
       attribute vec4 aPosition;
       attribute vec4 aNormal;   //variable for normal vector at each vertex
@@ -107,15 +107,20 @@
     precision mediump float;
 
     uniform vec4 u_color;
+    uniform bool u_useTexture;
     out vec4 outColor;
 
     uniform sampler2D sampler;
     in vec2 vTextureCoord;
 
     void main(void) {
-      vec4 textureColor = texture(sampler, vTextureCoord);
+      if (u_useTexture) {
+        vec4 textureColor = texture(sampler, vTextureCoord);
+        outColor = textureColor;
+      } else {
+        outColor = u_color;
+      }
     
-      outColor = textureColor;
     }
    
   </script>
@@ -173,7 +178,7 @@
         var z = sin * cos1 * radius;
 
         var normal = []
-        vec3.normalize(normal, [sin1 * sin, cos, sin * cos1]);
+        glMatrix.vec3.normalize(normal, [sin1 * sin, cos, sin * cos1]);
         normals.push(normal[0]);
         normals.push(normal[1]);
         normals.push(normal[2]);
@@ -272,21 +277,21 @@
       ];
 
       // setup model matrix;
-      const modelMatrix = mat4.create();
-      mat4.rotateZ(modelMatrix, modelMatrix, glMatrix.toRadian(0));
+      const modelMatrix = glMatrix.mat4.create();
+      glMatrix.mat4.rotateZ(modelMatrix, modelMatrix, 0);
 
       // setup view matrix
-      const viewMatrix = mat4.create();
-      const eyePosition = [0, 0.2, -0.2];
-      const lookAtPoint = [0, 0, 0.2];    
+      const viewMatrix = glMatrix.mat4.create();
+      const eyePosition = [0, -0.2, 0.2];
+      const lookAtPoint = [0, 0, 0];    
       const upVector = [0, 0.5, 0];  
 
       // Create the view matrix
-      mat4.lookAt(viewMatrix, eyePosition, lookAtPoint, upVector);
+      glMatrix.mat4.lookAt(viewMatrix, eyePosition, lookAtPoint, upVector);
 
 
       // setup projection matrix
-      const projectionMatrix = mat4.create();
+      const projectionMatrix = glMatrix.mat4.create();
 
       // Update the orthographic projection
       const left = -0.8;
@@ -296,7 +301,7 @@
       const near = -1.9;   // Should encompass the object's minimum depth
       const far = 1.5;     // Should be greater than the camera's maximum depth
 
-      mat4.ortho(projectionMatrix,left, right, bottom, top, near, far);
+      glMatrix.mat4.ortho(projectionMatrix,left, right, bottom, top, near, far);
 
       // TEXTURE INITIALIZATION
       var texture = gl.getAttribLocation(program, 'a_textureCoord');
@@ -344,13 +349,13 @@
         var ballprojectionMatrix;
 
         /**START PROJECTION MATRIX SPECIFICATION**/
-        var ballfieldOfViewYAxis = glMatrix.toRadian(30);
+        var ballfieldOfViewYAxis = 30 * Math.PI / 180;
         var ballaspectRatio      = canvas.width/canvas.height;
         var ballnearPlane        = 1;
         var ballfarPlane         = 100;
 
-        ballprojectionMatrix = mat4.create();
-        mat4.perspective(ballprojectionMatrix,ballfieldOfViewYAxis,ballaspectRatio,ballnearPlane,ballfarPlane);
+        ballprojectionMatrix = glMatrix.mat4.create();
+        glMatrix.mat4.perspective(ballprojectionMatrix,ballfieldOfViewYAxis,ballaspectRatio,ballnearPlane,ballfarPlane);
         gl.uniformMatrix4fv(balluProjectionMatrixPointer,false,new Float32Array(ballprojectionMatrix));
         /**END PROJECTION MATRIX SPECIFICATION**/
 
@@ -359,21 +364,21 @@
         var balleyePoint    = [1.0,3.0,5.0,1.0];              //where the camera is placed
         var ballupVector    = [1.0,0.0,0.0,0.0];              //orientation of the camera
 
-        ballviewMatrix = mat4.create();
-        mat4.lookAt(ballviewMatrix,balleyePoint,balllookAtPoint,ballupVector);
+        ballviewMatrix = glMatrix.mat4.create();
+        glMatrix.mat4.lookAt(ballviewMatrix,balleyePoint,balllookAtPoint,ballupVector);
         gl.uniformMatrix4fv(balluViewMatrixPointer,false,new Float32Array(ballviewMatrix));
         /**END VIEW MATRIX SPECIFICATION**/
 
         //MODEL MATRIX
-        ballmodelMatrix = mat4.create();
-        ballmodelMatrix = mat4.identity(ballmodelMatrix);
+        ballmodelMatrix = glMatrix.mat4.create();
+        ballmodelMatrix = glMatrix.mat4.identity(ballmodelMatrix);
         gl.uniformMatrix4fv(balluModelMatrixPointer,false,new Float32Array(ballmodelMatrix));
 
         //add normal matrix
-            var ballnormalMatrix = mat4.create();
+            var ballnormalMatrix = glMatrix.mat4.create();
             var balluNormalMatrixPtr = gl.getUniformLocation(ballProgram,"uNormalMatrix");
-            mat4.invert(ballnormalMatrix,ballmodelMatrix);
-            mat4.transpose(ballnormalMatrix,ballnormalMatrix);
+            glMatrix.mat4.invert(ballnormalMatrix,ballmodelMatrix);
+            glMatrix.mat4.transpose(ballnormalMatrix,ballnormalMatrix);
             gl.uniformMatrix4fv(balluNormalMatrixPtr,false,new Float32Array(ballnormalMatrix));
         
         //set-up light and material parameters
@@ -425,21 +430,6 @@
       // gl.bindTexture(gl.TEXTURE_2D, ballboxTexture);
       // gl.activeTexture(gl.TEXTURE0);
 
-      // function for matrix multiplication
-      function multiplyMatrices(mat1, mat2) {
-        let resulting_matrix = [];
-        for (let row = 0; row < 4; row++) {
-          for (let col = 0; col < 4; col++) {
-            let sum = 0;
-            for (let elem = 0; elem < 4; elem++) {
-              sum += mat1[row * 4 + elem] * mat2[elem * 4 + col];
-            }
-            resulting_matrix.push(sum);
-          }
-        }
-        return resulting_matrix;
-      }
-
       // function for converting the 2d array to 1d 
       function listarray_to_array(listarray) {
         arr = [];
@@ -468,11 +458,9 @@
         gl.uniformMatrix4fv(uProjectionMatrixPointer, false, new Float32Array(projectionMatrix));
         // set values
         gl.uniformMatrix4fv(uTransformationMatrixPointer, false, new Float32Array(transformationMatrix));
-        let color_change = 0
 
         var shapeBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, shapeBuffer);
-        color_change = color_change + 0.01;
         //Write data into the buffer object
         next_bufferdata = listarray_to_array(parts[0]);
         // console.log(next_bufferdata);
@@ -512,6 +500,7 @@
         gl.activeTexture(gl.TEXTURE0);
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, parts[0].length);
         gl.bindBuffer(gl.ARRAY_BUFFER, null);
+        var useTextureLocation = gl.getUniformLocation(program, 'u_useTexture');
 
         for (let i = 0; i < parts.length; i++) {
           //Buffer object to be accessed by gl.ARRAY_BUFFER
@@ -530,15 +519,12 @@
           //Enable assignment
           gl.enableVertexAttribArray(aPositionPointer);
           // Disable the texture attribute for the first set of vertices
-          if (i === 0 || i === 1) {
-            if (i ===1 ){
-              gl.uniform4f(colorLocation, 1, 0, 0, 1);
-            } else {
-              gl.uniform4f(colorLocation, color1[0], color1[1], color1[2], 1);
-            }
-              gl.disableVertexAttribArray(texture);
+
+          gl.uniform4f(colorLocation, 1, 0, 0, 1);
+          if (parts[i] === inner) {
+              gl.uniform1i(useTextureLocation, 0); // Use color
           } else {
-              gl.enableVertexAttribArray(texture);
+              gl.uniform1i(useTextureLocation, 1); // Use texture
           }
           // gl.vertexAttrib1f(aPointSizePointer, 2.0);
           gl.drawArrays(gl.TRIANGLE_STRIP, 0, parts[i].length);
@@ -556,37 +542,13 @@
         gl.uniformMatrix4fv(balluModelMatrixPointer, false, new Float32Array(ballmodelMatrix));
         gl.uniformMatrix4fv(balluViewMatrixPointer, false, new Float32Array(viewMatrix));
         gl.uniformMatrix4fv(balluProjectionMatrixPointer, false, new Float32Array(projectionMatrix));
-        //gl.uniform4fv(ballcolorLocation, [1.0, 0, 0, 1.0])
-        // set values
-        // gl.uniformMatrix4fv(balluTransformationMatrixPointer, false, new Float32Array(transformationMatrix));
-
-        // gl.vertexAttribPointer(balltexture, // Attribute location
-        //   2, // Number of elements per attribute
-        //   gl.FLOAT, // Type of elements
-        //   gl.FALSE,
-        //   6 * Float32Array.BYTES_PER_ELEMENT, // Size of an individual vertex
-        //   4 * Float32Array.BYTES_PER_ELEMENT // Offset from the beginning of a single vertex to this attribute
-        // );
-        // gl.enableVertexAttribArray(balltexture);
-
-        // gl.bindTexture(gl.TEXTURE_2D, ballboxTexture);
-        // gl.texImage2D(
-        //   gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA,
-        //   gl.UNSIGNED_BYTE,
-        //   ballimage
-        // );
-        // gl.bindTexture(gl.TEXTURE_2D, null);
-                
-        // gl.bindTexture(gl.TEXTURE_2D, ballboxTexture);
-        // gl.activeTexture(gl.TEXTURE0);
-
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
         gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0);
       }
       // initial render
       drawScene();
 
-      rotateListener(modelMatrix, ballmodelMatrix, drawScene, mat4.rotate, mat4.translate);
+      rotateListener(modelMatrix, ballmodelMatrix, drawScene, glMatrix.mat4.rotate, glMatrix.mat4.translate);
     }
     main();
   </script>

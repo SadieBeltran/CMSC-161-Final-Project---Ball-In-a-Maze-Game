@@ -698,16 +698,17 @@ const parts = [
   // side_outerRWall,
   // side_outerTWall,
   // side_outerLWall,
-  side_wall45_a, side_wall45_b, side_wall45_c, side_wall45_d,
-  side_wall46_a, side_wall46_b, side_wall46_c, side_wall46_d,
-  side_wall47_a, side_wall47_b, side_wall47_c, side_wall47_d,
-  side_wall48_a, side_wall48_b, side_wall48_c, side_wall48_d,
+
+  side_wall46_a, side_wall46_b, side_wall46_c, side_wall46_d,top_outerRWall,
+  side_wall45_a, side_wall45_b, side_wall45_c, side_wall45_d,top_outerBWall,
+  side_wall47_a, side_wall47_b, side_wall47_c, side_wall47_d,top_outerTWall,
+  side_wall48_a, side_wall48_b, side_wall48_c, side_wall48_d,top_outerLWall,
 
   // 4
-  top_outerBWall,
-  top_outerRWall,
-  top_outerTWall,
-  top_outerLWall,
+  
+ 
+
+  
 ];
 
 // misc
